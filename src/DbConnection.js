@@ -6,9 +6,9 @@ module.exports = DataBase;
 
 DataBase.InitDb = () => {
     const con = mysql.createConnection({
-        host: "localhost",
+        host: "store-db.cnpaf8zhvptl.us-east-1.rds.amazonaws.com",
         user: "root",
-        password: "Aa12345678",
+        password: "1q2w3e4r",
         database: "store"
     });
       
@@ -161,4 +161,97 @@ DataBase.removeProductFromShoppingCart = (id, callback) => {
         callback(result)
         console.log(result);
     });
+}
+
+DataBase.removeProductFromStore = (id, callback) => {
+    var sql = "DELETE from products where id = " + id
+    DataBase.GetDB().query(sql, function (err, result) {
+        if (err) throw err;
+        callback(result)
+        console.log(result);
+    })
+}
+
+DataBase.updateAmountFromManager = (id, amount, callback) => {
+    var sql = "UPDATE products SET amount = " + amount + " WHERE id = " + id
+    DataBase.GetDB().query(sql, function (err, result) {
+        if (err) throw err;
+        callback(result)
+        console.log(result);
+    })
+}
+
+DataBase.addOrder = (firstName, lastName, address, city, postal, country, callback) => {
+    var sql = "INSERT INTO orders (firstName, lastName, address, city, postal, country, status, date) VALUES ('" + 
+        firstName + "', '" + lastName + "', '" +address +"', '" + city + "'," + postal + ", '" + country + "', 'waitForApproval', '" + new Date().toLocaleDateString() + "')";
+    DataBase.GetDB().query(sql, function (err, result) {
+        if (err) throw err;
+        callback(result)
+        DataBase.addProductsToOrder(result.insertId)
+        console.log(result);
+    });
+}
+
+DataBase.addProductsToOrder = (orderId) => {
+    DataBase.selectAllShoppingCartId((data) => {
+        var values = []
+        data.map(obj => values.push([orderId,obj.productId]))
+        DataBase.insertMultiIntoProductsInOrders(values, DataBase.removeAllShoppingCart);
+    });
+}
+
+DataBase.insertMultiIntoProductsInOrders = (values, callback) => {
+    var sql = "INSERT INTO productsinorder (orderId, ProductId) VALUES ?";
+    DataBase.GetDB().query(sql, [values], function (err, result) {
+        if (err) throw err;
+        callback()
+    }); 
+}
+
+DataBase.removeAllShoppingCart = () => {
+    var sql = "DELETE from shoppingcart"
+    DataBase.GetDB().query(sql, function (err, result) {
+        if (err) throw err;
+        console.log(result);
+    });
+}
+
+DataBase.getAllOrders = (callback) => {
+    DataBase.GetDB().query("SELECT * FROM orders", function (err, result) {
+        if (err) throw err;
+        callback(result)
+        console.log(result);
+    });
+}
+
+DataBase.changeOrderStatus = (orderId, orderStatus, callback) => {
+    var sql = "UPDATE orders SET status = '" + orderStatus + "' WHERE id = " + orderId
+    DataBase.GetDB().query(sql, function (err, result) {
+        if (err) throw err;
+        if (orderStatus == 'approve') { 
+            DataBase.getProductsIdByOrder(orderId, DataBase.updateAmount)
+        }
+        callback(result)
+        console.log(result);
+    })
+}
+
+DataBase.getProductsIdByOrder = (orderId, callback) => {
+    DataBase.GetDB().query("SELECT * FROM productsinorder WHERE orderId = " + orderId, function (err, result) {
+        if (err) throw err;
+        callback(result)
+        console.log(result);
+    });
+}
+
+DataBase.updateAmount = (data) => {
+    console.log(data)
+    var values = ''
+    data.map(obj => values += obj.productId + ',')
+    values = values.substring(0, values.length -1)
+    var sql = "UPDATE products SET amount = amount - 1 WHERE id IN (" + values + ")"
+    DataBase.GetDB().query(sql, function (err, result) {
+        if (err) throw err;
+        console.log(result);
+    })
 }

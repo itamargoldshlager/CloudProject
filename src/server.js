@@ -4,7 +4,6 @@ var cors = require('cors');
 var bodyParser= require("body-parser");
 var device = require('express-device');
 var useragent = require('express-useragent');
-var s3Connection = require('./s3')
 
 const app = express()
 const port = 80
@@ -34,5 +33,4 @@ app.get('/', function(req, res) {
   }
 });
 
-s3Connection.testCreds()
 app.listen(port, () => console.log(`Example app listening on port ${port}!`))

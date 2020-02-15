@@ -1,5 +1,4 @@
 var multer = require('multer')
-const s3Connection = require('../s3')
 
 exports.getProductsByCategory = function(req, res) {
     const category = req.params.category
@@ -44,7 +43,9 @@ exports.addNewProduct = (req,res) => {
         return res.status(500).json(err)
     }
     var file = req.file
-    s3Connection.uploadImage(req.params.id + file.originalname.substring(file.originalname.lastIndexOf('.')))
+
+    // s3Connection.uploadImage(req.params.id + file.originalname.substring(file.originalname.lastIndexOf('.')))
+    require('../DbConnection').uploadImage(req.params.id, req.params.id + file.originalname.substring(file.originalname.lastIndexOf('.')))
     return res.status(200).send(req.file)
     })
 }
@@ -56,7 +57,7 @@ exports.removeProductFromStore = function (req, res) {
 
 exports.updateAmount = function (req, res) {
     console.log(req.body)
-    require('../DbConnection').updateAmountFromManager(req.body.productId, req.body.productAmount, (data) => res.send(data));
+    require('../DbConnection').updateAmountFromAdmin(req.body.productId, req.body.productAmount, (data) => res.send(data));
 }
 
 exports.getProductsByOrder = function (req, res) {

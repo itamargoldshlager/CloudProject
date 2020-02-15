@@ -1,4 +1,6 @@
 const mysql = require('mysql');
+const fs = require('fs')
+const path = require("path");
 
 const DataBase = function() {}
 
@@ -7,8 +9,10 @@ module.exports = DataBase;
 DataBase.InitDb = () => {
     const con = mysql.createConnection({
         host: "store-db.cnpaf8zhvptl.us-east-1.rds.amazonaws.com",
+        // host: "localhost",
         user: "root",
         password: "1q2w3e4r",
+        // password: "Aa12345678",
         database: "store"
     });
       
@@ -172,7 +176,7 @@ DataBase.removeProductFromStore = (id, callback) => {
     })
 }
 
-DataBase.updateAmountFromManager = (id, amount, callback) => {
+DataBase.updateAmountFromAdmin = (id, amount, callback) => {
     var sql = "UPDATE products SET amount = " + amount + " WHERE id = " + id
     DataBase.GetDB().query(sql, function (err, result) {
         if (err) throw err;
@@ -253,5 +257,20 @@ DataBase.updateAmount = (data) => {
     DataBase.GetDB().query(sql, function (err, result) {
         if (err) throw err;
         console.log(result);
+    })
+}
+
+
+DataBase.uploadImage = (proudctId, imageName) => {
+    var imagePath = path.resolve(__dirname, "./public/" + imageName)
+    data = {
+        image: fs.readFileSync(imagePath)
+    }
+
+    var sql = "UPDATE products SET ? WHERE id = " + proudctId
+    DataBase.GetDB().query(sql, data, function (err, result) {
+        if (err) throw err;
+        console.log(result);
+        fs.unlinkSync(imagePath)
     })
 }
